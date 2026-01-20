@@ -117,7 +117,7 @@ export const Auth: React.FC<AuthProps> = ({ onContinueAsGuest }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
           </div>
-          <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100">ZenTask <span className="text-indigo-600">AI</span></h1>
+          <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100">ZenTask <span className="text-indigo-600"></span></h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2">{isLogin ? 'Welcome back to your focus' : 'Begin your journey to discipline'}</p>
         </div>
 
