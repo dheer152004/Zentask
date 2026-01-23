@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   sendEmailVerification,
-  updateProfile 
+  updateProfile
 } from 'firebase/auth';
 import { auth, db } from '../services/firebase';
 import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore';
@@ -18,6 +18,9 @@ export const Auth: React.FC<AuthProps> = ({ onContinueAsGuest }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
+  const [slogan, setSlogan] = useState('');
+  const [selectedAvatar, setSelectedAvatar] = useState('https://api.dicebear.com/7.x/avataaars/svg?seed=User');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -32,7 +35,7 @@ export const Auth: React.FC<AuthProps> = ({ onContinueAsGuest }) => {
       if (isLogin) {
         // Support both email and username login
         let loginEmail = email;
-        
+
         // Check if input is a username (doesn't contain @)
         if (!email.includes('@')) {
           // Query Firestore to find user by username
@@ -40,16 +43,16 @@ export const Auth: React.FC<AuthProps> = ({ onContinueAsGuest }) => {
             const usersRef = collection(db, 'users');
             const q = query(usersRef, where('username', '==', email.toLowerCase().trim()));
             const querySnapshot = await getDocs(q);
-            
+
             if (querySnapshot.empty) {
               setError('No account found with this username. Please check and try again.');
               setLoading(false);
               return;
             }
-            
+
             const userData = querySnapshot.docs[0].data();
             loginEmail = userData.email;
-            
+
             if (!userData.email) {
               setError('User account is missing email information. Please contact support.');
               setLoading(false);
@@ -62,7 +65,7 @@ export const Auth: React.FC<AuthProps> = ({ onContinueAsGuest }) => {
             return;
           }
         }
-        
+
         await signInWithEmailAndPassword(auth, loginEmail, password);
       } else {
         // Registration
@@ -71,19 +74,27 @@ export const Auth: React.FC<AuthProps> = ({ onContinueAsGuest }) => {
           setLoading(false);
           return;
         }
-        
+
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: username });
-        
-        // Store username and email in Firestore for username login support
+        const displayName = name.trim() || username.trim();
+        await updateProfile(userCredential.user, { displayName });
+
+        // Store complete user profile in Firestore
         const userRef = doc(db, 'users', userCredential.user.uid);
         await setDoc(userRef, {
           username: username.toLowerCase().trim(),
           email: email.toLowerCase().trim(),
-          displayName: username,
-          createdAt: new Date().toISOString()
+          displayName: displayName,
+          avatarUrl: selectedAvatar,
+          bio: 'Finding focus and flow every day.',
+          slogan: slogan.trim() || 'Stay focused, stay productive',
+          darkMode: false,
+          theme: 'indigo',
+          allowCompletedDeletion: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }, { merge: true });
-        
+
         await sendEmailVerification(userCredential.user);
         setMessage('Registration successful! Please check your email for verification.');
       }
@@ -123,37 +134,81 @@ export const Auth: React.FC<AuthProps> = ({ onContinueAsGuest }) => {
 
         <form onSubmit={handleAuth} className="space-y-4">
           {!isLogin && (
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block ml-2">Username</label>
-              <input 
-                type="text" 
-                required 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="ZenMaster" 
-                className="w-full bg-slate-50 dark:bg-slate-800 border-none px-6 py-4 rounded-2xl text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-              />
-            </div>
+            <>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block ml-2">Full Name</label>
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="John Doe"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none px-6 py-4 rounded-2xl text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block ml-2">Username</label>
+                <input
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="zenmaster"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none px-6 py-4 rounded-2xl text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block ml-2">Your Slogan</label>
+                <input
+                  type="text"
+                  value={slogan}
+                  onChange={(e) => setSlogan(e.target.value)}
+                  placeholder="Stay focused, stay productive"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none px-6 py-4 rounded-2xl text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block ml-2">Choose Avatar</label>
+                <div className="flex gap-2 flex-wrap justify-center bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl">
+                  {['User', 'Felix', 'Aneka', 'Oliver', 'Sasha', 'Nala'].map((seed) => {
+                    const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+                    return (
+                      <button
+                        key={seed}
+                        type="button"
+                        onClick={() => setSelectedAvatar(avatarUrl)}
+                        className={`w-14 h-14 rounded-full border-2 overflow-hidden transition-all ${selectedAvatar === avatarUrl
+                            ? 'border-indigo-600 scale-110 shadow-lg'
+                            : 'border-transparent hover:scale-105'
+                          }`}
+                      >
+                        <img src={avatarUrl} alt={seed} className="w-full h-full object-cover" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
           )}
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block ml-2">{isLogin ? 'Email or Username' : 'Email Address'}</label>
-            <input 
+            <input
               type={isLogin ? "text" : "email"}
-              required 
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={isLogin ? "email@example.com or username" : "you@example.com"} 
+              placeholder={isLogin ? "email@example.com or username" : "you@example.com"}
               className="w-full bg-slate-50 dark:bg-slate-800 border-none px-6 py-4 rounded-2xl text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
             />
           </div>
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-2 block ml-2">Password</label>
-            <input 
-              type="password" 
-              required 
+            <input
+              type="password"
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••" 
+              placeholder="••••••••"
               className="w-full bg-slate-50 dark:bg-slate-800 border-none px-6 py-4 rounded-2xl text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
             />
           </div>
@@ -161,8 +216,8 @@ export const Auth: React.FC<AuthProps> = ({ onContinueAsGuest }) => {
           {error && <p className="text-red-500 text-xs font-bold text-center px-2">{error}</p>}
           {message && <p className="text-emerald-500 text-xs font-bold text-center px-2">{message}</p>}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-xl shadow-indigo-100 dark:shadow-none transition-all active:scale-95 flex items-center justify-center gap-2"
           >
@@ -176,20 +231,20 @@ export const Auth: React.FC<AuthProps> = ({ onContinueAsGuest }) => {
         </form>
 
         <div className="mt-8 flex flex-col gap-4 text-center">
-          <button 
+          <button
             onClick={() => setIsLogin(!isLogin)}
             className="text-sm font-bold text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
           >
             {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
           </button>
-          
+
           <div className="flex items-center gap-4 py-2">
             <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
             <span className="text-[10px] font-black uppercase text-slate-300 dark:text-slate-600">OR</span>
             <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800" />
           </div>
 
-          <button 
+          <button
             onClick={onContinueAsGuest}
             className="text-sm font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-600 transition-colors"
           >

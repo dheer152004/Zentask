@@ -5,6 +5,7 @@ import { DeleteModal } from './DeleteModal';
 import { Notification } from './Notification';
 import { auth, db, requestNotificationPermission } from '../services/firebase';
 import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { debouncedSyncToFirestore, syncAllDataToFirestore } from '../services/dataSync';
 
 interface ProfileProps {
   profile: UserProfile;
@@ -50,19 +51,19 @@ const AVATAR_STYLES = [
   { id: 'identicon', label: 'Abstract' }
 ];
 
-export const Profile: React.FC<ProfileProps> = ({ 
-  profile, 
-  onProfileChange, 
-  logs, 
+export const Profile: React.FC<ProfileProps> = ({
+  profile,
+  onProfileChange,
+  logs,
   onLogsUpdate,
-  habits, 
+  habits,
   onHabitsUpdate,
   goals,
   onGoalsUpdate,
   challenges,
   onChallengesUpdate,
-  onLogout, 
-  isGuest 
+  onLogout,
+  isGuest
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
@@ -71,7 +72,7 @@ export const Profile: React.FC<ProfileProps> = ({
   const [editedAvatar, setEditedAvatar] = useState(profile.avatarUrl);
   const [editedUsername, setEditedUsername] = useState(profile.username || '');
   const [usernameError, setUsernameError] = useState('');
-  
+
   // Custom Avatar Generator State
   const [customSeed, setCustomSeed] = useState('');
   const [customStyle, setCustomStyle] = useState('avataaars');
@@ -109,7 +110,7 @@ export const Profile: React.FC<ProfileProps> = ({
       setUsernameError('Username must be at least 3 characters');
       return;
     }
-    
+
     if (editedUsername && !/^[a-zA-Z0-9_-]+$/.test(editedUsername)) {
       setUsernameError('Username can only contain letters, numbers, underscore, and dash');
       return;
@@ -121,7 +122,7 @@ export const Profile: React.FC<ProfileProps> = ({
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('username', '==', editedUsername.toLowerCase().trim()));
         const querySnapshot = await getDocs(q);
-        
+
         if (!querySnapshot.empty) {
           setUsernameError('This username is already taken');
           return;
@@ -147,12 +148,15 @@ export const Profile: React.FC<ProfileProps> = ({
     setNotification({ message: 'Profile updated successfully!', type: 'success' });
 
     // Update username in Firestore if user is logged in
-    if (auth.currentUser && editedUsername) {
+    if (auth.currentUser) {
       try {
         const userRef = doc(db, 'users', auth.currentUser.uid);
         await updateDoc(userRef, {
           username: editedUsername.toLowerCase().trim(),
-          displayName: editedName
+          displayName: editedName,
+          avatarUrl: editedAvatar,
+          slogan: editedMantra,
+          updatedAt: new Date().toISOString()
         });
       } catch (err: any) {
         console.error('Error updating profile:', err);
@@ -182,24 +186,36 @@ export const Profile: React.FC<ProfileProps> = ({
   };
 
   const toggleDarkMode = () => {
-    onProfileChange({
+    const updatedProfile = {
       ...profile,
       darkMode: !profile.darkMode
-    });
+    };
+    onProfileChange(updatedProfile);
+    if (auth.currentUser) {
+      debouncedSyncToFirestore(auth.currentUser.uid, 'profile', updatedProfile);
+    }
   };
 
   const changeTheme = (themeKey: string) => {
-    onProfileChange({
+    const updatedProfile = {
       ...profile,
       theme: themeKey
-    });
+    };
+    onProfileChange(updatedProfile);
+    if (auth.currentUser) {
+      debouncedSyncToFirestore(auth.currentUser.uid, 'profile', updatedProfile);
+    }
   };
 
   const toggleAllowCompletedDeletion = () => {
-    onProfileChange({
+    const updatedProfile = {
       ...profile,
       allowCompletedDeletion: !profile.allowCompletedDeletion
-    });
+    };
+    onProfileChange(updatedProfile);
+    if (auth.currentUser) {
+      debouncedSyncToFirestore(auth.currentUser.uid, 'profile', updatedProfile);
+    }
   };
 
   const handleEnableNotifications = async () => {
@@ -231,21 +247,39 @@ export const Profile: React.FC<ProfileProps> = ({
     const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
-       try {
-         const data = JSON.parse(e.target?.result as string);
-         if (data.logs) onLogsUpdate(data.logs);
-         if (data.habits) onHabitsUpdate(data.habits);
-         if (data.goals) onGoalsUpdate(data.goals);
-         if (data.challenges) onChallengesUpdate(data.challenges);
-         if (data.profile) onProfileChange(data.profile);
-         alert('Data imported successfully!');
-       } catch (err) {
-         alert('Failed to import data. Invalid JSON file.');
-         console.error(err);
-       }
-       // Reset input
-       if (fileInputRef.current) fileInputRef.current.value = '';
+    reader.onload = async (e) => {
+      try {
+        const data = JSON.parse(e.target?.result as string);
+        if (data.logs) onLogsUpdate(data.logs);
+        if (data.habits) onHabitsUpdate(data.habits);
+        if (data.goals) onGoalsUpdate(data.goals);
+        if (data.challenges) onChallengesUpdate(data.challenges);
+        if (data.profile) onProfileChange(data.profile);
+        
+        // Sync imported data to Firestore if user is authenticated
+        if (auth.currentUser) {
+          try {
+            await syncAllDataToFirestore(auth.currentUser.uid, {
+              logs: data.logs || logs,
+              habits: data.habits || habits,
+              goals: data.goals || goals,
+              challenges: data.challenges || challenges,
+              profile: data.profile || profile
+            });
+            console.log('✅ Imported data synced to Firestore');
+          } catch (syncErr) {
+            console.error('⚠️ Data imported but failed to sync to Firestore:', syncErr);
+            setNotification({ message: 'Data imported locally, but failed to sync to Firestore', type: 'warning' });
+          }
+        }
+        
+        setNotification({ message: 'Data imported successfully!', type: 'success' });
+      } catch (err) {
+        setNotification({ message: 'Failed to import data. Invalid JSON file.', type: 'error' });
+        console.error(err);
+      }
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = '';
     };
     reader.readAsText(file);
   };
@@ -257,7 +291,7 @@ export const Profile: React.FC<ProfileProps> = ({
           <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-100 mb-1">Your Profile</h2>
           <p className="text-slate-500 dark:text-slate-400">Customize your space and see your journey</p>
         </div>
-        <button 
+        <button
           onClick={onLogout}
           className="px-6 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 transition-all flex items-center gap-2"
         >
@@ -281,7 +315,7 @@ export const Profile: React.FC<ProfileProps> = ({
               <p className="text-sm text-amber-700 dark:text-amber-400">Data is saved locally. Log in to sync across devices.</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={onLogout}
             className="px-6 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-sm transition-all"
           >
@@ -293,10 +327,10 @@ export const Profile: React.FC<ProfileProps> = ({
       <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-slate-100 dark:border-slate-800 relative overflow-hidden transition-colors">
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 md:gap-12">
           <div className="relative group shrink-0">
-            <img 
-              src={isEditing ? editedAvatar : profile.avatarUrl} 
-              alt="Avatar" 
-              className="w-32 h-32 md:w-40 md:h-40 rounded-[2rem] shadow-xl border-4 border-slate-50 dark:border-slate-800 object-cover transition-colors bg-slate-100 dark:bg-slate-800" 
+            <img
+              src={isEditing ? editedAvatar : profile.avatarUrl}
+              alt="Avatar"
+              className="w-32 h-32 md:w-40 md:h-40 rounded-[2rem] shadow-xl border-4 border-slate-50 dark:border-slate-800 object-cover transition-colors bg-slate-100 dark:bg-slate-800"
             />
           </div>
           <div className="flex-1 text-center md:text-left w-full">
@@ -306,38 +340,38 @@ export const Profile: React.FC<ProfileProps> = ({
                   <input type="text" value={editedName} onChange={e => setEditedName(e.target.value)} className="w-full text-3xl font-black text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-800 border-b-2 border-indigo-200 dark:border-indigo-600 focus:outline-none focus:border-indigo-600 px-2 py-1 rounded-t-lg transition-colors" placeholder="Name" />
                   <input type="text" value={editedBio} onChange={e => setEditedBio(e.target.value)} placeholder="Short bio..." className="w-full text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 focus:outline-none px-2 py-1 transition-colors" />
                   <div>
-                    <input 
-                      type="text" 
-                      value={editedUsername} 
+                    <input
+                      type="text"
+                      value={editedUsername}
                       onChange={e => {
                         setEditedUsername(e.target.value);
                         setUsernameError('');
                       }}
-                      placeholder="Username (for login)..." 
+                      placeholder="Username (for login)..."
                       className={`w-full text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 border-b transition-colors focus:outline-none px-2 py-1 ${usernameError ? 'border-red-500' : 'border-slate-200 dark:border-slate-700 focus:border-indigo-600'}`}
                     />
                     {usernameError && <p className="text-red-500 text-xs mt-1 font-bold">{usernameError}</p>}
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-left">Create Your Own</p>
                   <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      value={customSeed} 
-                      onChange={(e) => setCustomSeed(e.target.value)} 
+                    <input
+                      type="text"
+                      value={customSeed}
+                      onChange={(e) => setCustomSeed(e.target.value)}
                       placeholder="Type a word..."
                       className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                     />
-                    <select 
-                      value={customStyle} 
+                    <select
+                      value={customStyle}
                       onChange={(e) => setCustomStyle(e.target.value)}
                       className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                     >
                       {AVATAR_STYLES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
                     </select>
-                    <button 
+                    <button
                       onClick={applyCustomAvatar}
                       className="px-4 py-2 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-indigo-200 dark:hover:bg-indigo-900 transition-colors"
                     >
@@ -350,8 +384,8 @@ export const Profile: React.FC<ProfileProps> = ({
                   <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-left">Or Choose Preset</p>
                   <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                     {AVATAR_PRESETS.map((url) => (
-                      <button 
-                        key={url} 
+                      <button
+                        key={url}
                         onClick={() => setEditedAvatar(url)}
                         className={`w-10 h-10 rounded-full border-2 overflow-hidden transition-all bg-slate-100 dark:bg-slate-800 ${editedAvatar === url ? 'border-indigo-600 scale-110 shadow-md' : 'border-transparent hover:scale-105'}`}
                       >
@@ -430,14 +464,14 @@ export const Profile: React.FC<ProfileProps> = ({
                   const themeData = THEMES[themeKey];
                   const isActive = (profile.theme || 'indigo') === themeKey;
                   return (
-                     <button
-                        key={themeKey}
-                        onClick={() => changeTheme(themeKey)}
-                        className={`aspect-square rounded-xl flex items-center justify-center border-2 transition-all ${isActive ? 'border-indigo-500 scale-110 shadow-md' : 'border-transparent hover:scale-105'}`}
-                        style={{ backgroundColor: themeData.primary[100] }}
-                     >
-                        <div className="w-4 h-4 rounded-full" style={{ backgroundColor: themeData.primary[500] }} />
-                     </button>
+                    <button
+                      key={themeKey}
+                      onClick={() => changeTheme(themeKey)}
+                      className={`aspect-square rounded-xl flex items-center justify-center border-2 transition-all ${isActive ? 'border-indigo-500 scale-110 shadow-md' : 'border-transparent hover:scale-105'}`}
+                      style={{ backgroundColor: themeData.primary[100] }}
+                    >
+                      <div className="w-4 h-4 rounded-full" style={{ backgroundColor: themeData.primary[500] }} />
+                    </button>
                   );
                 })}
               </div>
@@ -467,7 +501,7 @@ export const Profile: React.FC<ProfileProps> = ({
             </div>
 
 
-              {/* We will notification feature in future */}
+            {/* We will notification feature in future */}
             {/* <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl transition-colors">
               <div>
                 <p className="font-bold text-slate-700 dark:text-slate-200">Daily Notifications</p>
@@ -481,7 +515,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 {notifLoading ? 'Requesting...' : 'Enable'}
               </button>
             </div> */}
-            
+
           </div>
         </div>
         <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col transition-colors">
@@ -494,7 +528,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 `Your ZenTask data is scoped to your account ID (${auth.currentUser?.uid?.slice(0, 8)}...).`
               )}
             </p>
-            
+
             <div className="grid grid-cols-2 gap-3 mt-4">
               <button onClick={handleExport} className="flex items-center justify-center gap-2 py-3 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-slate-700 text-xs uppercase tracking-wider">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -525,7 +559,7 @@ export const Profile: React.FC<ProfileProps> = ({
         </div>
       </div>
 
-      <DeleteModal 
+      <DeleteModal
         isOpen={isConfirmingClear}
         onCancel={() => setIsConfirmingClear(false)}
         onConfirm={async () => {
@@ -535,7 +569,7 @@ export const Profile: React.FC<ProfileProps> = ({
           localStorage.removeItem(`${prefix}goals`);
           localStorage.removeItem(`${prefix}challenges`);
           localStorage.removeItem(`${prefix}profile`);
-          
+
           if (isGuest) {
             localStorage.removeItem('zentask_guest_mode');
             window.location.reload();
@@ -554,7 +588,7 @@ export const Profile: React.FC<ProfileProps> = ({
       />
 
       {notification && (
-        <Notification 
+        <Notification
           message={notification.message}
           type={notification.type}
           onClose={() => setNotification(null)}

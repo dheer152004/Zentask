@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './services/firebase';
+import { loadUserDataFromFirestore, debouncedSyncToFirestore, syncAllDataToFirestore } from './services/dataSync';
 import { Auth } from './components/Auth';
 import { TaskManager } from './components/TaskManager';
 import { ReportDashboard } from './components/ReportDashboard';
@@ -52,47 +53,107 @@ const App: React.FC = () => {
     });
     return unsubscribe;
   }, [navigate]);
-  
+
   const getLocalDateString = () => new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60 * 1000)).toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
 
   useEffect(() => {
     if (authLoading) return;
-    try {
-      const prefix = currentUser ? `${currentUser.uid}_` : 'zentask_';
-      const savedLogs = localStorage.getItem(`${prefix}logs`);
-      const savedHabits = localStorage.getItem(`${prefix}habits`);
-      const savedGoals = localStorage.getItem(`${prefix}goals`);
-      const savedChallenges = localStorage.getItem(`${prefix}challenges`);
-      const savedProfile = localStorage.getItem(`${prefix}profile`);
 
-      setLogs(savedLogs ? JSON.parse(savedLogs) : {});
-      setMonthlyHabits(savedHabits ? JSON.parse(savedHabits) : []);
-      setGoals(savedGoals ? JSON.parse(savedGoals) : []);
-      setChallenges(savedChallenges ? JSON.parse(savedChallenges) : []);
-      
-      if (savedProfile) {
-        setUserProfile(prev => ({...prev, ...JSON.parse(savedProfile)}));
-      } else {
-        // Reset to default profile if no saved profile found for this context
-        setUserProfile({
-           name: currentUser?.displayName || 'Zen User',
-           bio: 'Finding focus and flow every day.',
-           avatarUrl: currentUser?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.uid || 'guest'}`,
-           productivityMantra: 'Small steps, big impact.',
-           darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
-           theme: 'indigo',
-           allowCompletedDeletion: false
-        });
+    const loadData = async () => {
+      try {
+        const prefix = currentUser ? `${currentUser.uid}_` : 'zentask_';
+
+        // For authenticated users, load from Firestore first
+        if (currentUser) {
+          console.log('🔄 Loading data from Firestore...');
+          const firestoreData = await loadUserDataFromFirestore(currentUser.uid);
+
+          // Merge Firestore data with localStorage (Firestore takes precedence)
+          const savedLogs = localStorage.getItem(`${prefix}logs`);
+          const savedHabits = localStorage.getItem(`${prefix}habits`);
+          const savedGoals = localStorage.getItem(`${prefix}goals`);
+          const savedChallenges = localStorage.getItem(`${prefix}challenges`);
+          const savedProfile = localStorage.getItem(`${prefix}profile`);
+
+          setLogs(firestoreData.logs || (savedLogs ? JSON.parse(savedLogs) : {}));
+          setMonthlyHabits(firestoreData.habits || (savedHabits ? JSON.parse(savedHabits) : []));
+          setGoals(firestoreData.goals || (savedGoals ? JSON.parse(savedGoals) : []));
+          setChallenges(firestoreData.challenges || (savedChallenges ? JSON.parse(savedChallenges) : []));
+
+          if (firestoreData.profile) {
+            setUserProfile(firestoreData.profile);
+          } else if (savedProfile) {
+            setUserProfile(prev => ({ ...prev, ...JSON.parse(savedProfile) }));
+          } else {
+            setUserProfile({
+              name: currentUser?.displayName || 'Zen User',
+              bio: 'Finding focus and flow every day.',
+              avatarUrl: currentUser?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.uid}`,
+              productivityMantra: 'Small steps, big impact.',
+              darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
+              theme: 'indigo',
+              allowCompletedDeletion: false
+            });
+          }
+
+          // If there was local data but no Firestore data, migrate it
+          if (savedLogs && !firestoreData.logs) {
+            console.log('📤 Migrating local data to Firestore...');
+            const localLogs = savedLogs ? JSON.parse(savedLogs) : {};
+            const localHabits = savedHabits ? JSON.parse(savedHabits) : [];
+            const localGoals = savedGoals ? JSON.parse(savedGoals) : [];
+            const localChallenges = savedChallenges ? JSON.parse(savedChallenges) : [];
+            const localProfile = savedProfile ? JSON.parse(savedProfile) : userProfile;
+
+            await syncAllDataToFirestore(currentUser.uid, {
+              logs: localLogs,
+              habits: localHabits,
+              goals: localGoals,
+              challenges: localChallenges,
+              profile: localProfile
+            });
+          }
+        } else {
+          // Guest mode: Load from localStorage only
+          const savedLogs = localStorage.getItem(`${prefix}logs`);
+          const savedHabits = localStorage.getItem(`${prefix}habits`);
+          const savedGoals = localStorage.getItem(`${prefix}goals`);
+          const savedChallenges = localStorage.getItem(`${prefix}challenges`);
+          const savedProfile = localStorage.getItem(`${prefix}profile`);
+
+          setLogs(savedLogs ? JSON.parse(savedLogs) : {});
+          setMonthlyHabits(savedHabits ? JSON.parse(savedHabits) : []);
+          setGoals(savedGoals ? JSON.parse(savedGoals) : []);
+          setChallenges(savedChallenges ? JSON.parse(savedChallenges) : []);
+
+          if (savedProfile) {
+            setUserProfile(prev => ({ ...prev, ...JSON.parse(savedProfile) }));
+          } else {
+            setUserProfile({
+              name: 'Zen User',
+              bio: 'Finding focus and flow every day.',
+              avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest',
+              productivityMantra: 'Small steps, big impact.',
+              darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
+              theme: 'indigo',
+              allowCompletedDeletion: false
+            });
+          }
+        }
+      } catch (e) {
+        console.error('❌ Error loading data:', e);
       }
-    } catch (e) { console.error(e); }
+    };
+
+    loadData();
   }, [currentUser, authLoading]);
 
   // Apply Theme and Dark Mode
   useEffect(() => {
     const root = document.documentElement;
     const isAppActive = !showLanding && (!!currentUser || isGuest);
-    
+
     // Dark Mode
     if (userProfile.darkMode) {
       root.classList.add('dark');
@@ -118,11 +179,21 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!authLoading && (currentUser || isGuest)) {
       const prefix = currentUser ? `${currentUser.uid}_` : 'zentask_';
+      // Always save to localStorage for offline access
       localStorage.setItem(`${prefix}logs`, JSON.stringify(logs));
       localStorage.setItem(`${prefix}habits`, JSON.stringify(monthlyHabits));
       localStorage.setItem(`${prefix}goals`, JSON.stringify(goals));
       localStorage.setItem(`${prefix}challenges`, JSON.stringify(challenges));
       localStorage.setItem(`${prefix}profile`, JSON.stringify(userProfile));
+
+      // For authenticated users, also sync to Firestore (debounced)
+      if (currentUser) {
+        debouncedSyncToFirestore(currentUser.uid, 'logs', logs);
+        debouncedSyncToFirestore(currentUser.uid, 'habits', monthlyHabits);
+        debouncedSyncToFirestore(currentUser.uid, 'goals', goals);
+        debouncedSyncToFirestore(currentUser.uid, 'challenges', challenges);
+        debouncedSyncToFirestore(currentUser.uid, 'profile', userProfile);
+      }
     }
   }, [logs, monthlyHabits, goals, challenges, userProfile, currentUser, isGuest, authLoading]);
 
@@ -153,7 +224,7 @@ const App: React.FC = () => {
   }, [logs]);
 
   if (authLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">Loading ZenTask...</div>;
-  
+
   return (
     <Routes>
       <Route path="/" element={showLanding && !currentUser && !isGuest ? <LandingPage onLaunchApp={() => { setShowLanding(false); navigate('/auth'); }} /> : !currentUser && !isGuest ? <Auth onContinueAsGuest={() => { setIsGuest(true); setShowLanding(false); localStorage.setItem('zentask_guest_mode', 'true'); navigate('/dashboard'); }} /> : <Dashboard />} />
@@ -173,11 +244,11 @@ const App: React.FC = () => {
             {activeTab === 'goals' && <GoalsView goals={goals} onAddGoal={(text, type, description) => setGoals(prev => [...prev, { id: `goal-${Date.now()}`, text, description, type, completed: false, createdAt: new Date().toISOString(), subtasks: [] }])} onToggleGoal={(id) => setGoals(prev => prev.map(g => g.id === id ? { ...g, completed: !g.completed } : g))} onDeleteGoal={(id) => setGoals(prev => prev.filter(g => g.id !== id))} onGoalsUpdate={setGoals} allowCompletedDeletion={userProfile.allowCompletedDeletion} />}
             {activeTab === 'challenges' && <ChallengeManager challenges={challenges} onChallengesChange={setChallenges} allowCompletedDeletion={userProfile.allowCompletedDeletion} currentTheme={userProfile.theme} />}
             {activeTab === 'monthly' && <ReportDashboard logs={logs} goals={goals} challenges={challenges} currentTheme={userProfile.theme} />}
-            {activeTab === 'profile' && 
-              <Profile 
-                profile={userProfile} 
-                onProfileChange={setUserProfile} 
-                logs={logs} 
+            {activeTab === 'profile' &&
+              <Profile
+                profile={userProfile}
+                onProfileChange={setUserProfile}
+                logs={logs}
                 onLogsUpdate={setLogs}
                 habits={monthlyHabits}
                 onHabitsUpdate={setMonthlyHabits}
@@ -185,8 +256,8 @@ const App: React.FC = () => {
                 onGoalsUpdate={setGoals}
                 challenges={challenges}
                 onChallengesUpdate={setChallenges}
-                onLogout={() => { if (currentUser) auth.signOut(); else setIsGuest(false); setShowLanding(true); navigate('/'); }} 
-                isGuest={isGuest} 
+                onLogout={() => { if (currentUser) auth.signOut(); else setIsGuest(false); setShowLanding(true); navigate('/'); }}
+                isGuest={isGuest}
               />
             }
           </div>
