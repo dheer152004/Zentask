@@ -7,7 +7,8 @@ import {
     getDocs,
     writeBatch,
     query,
-    Timestamp
+    Timestamp,
+    deleteDoc
 } from 'firebase/firestore';
 import { DayLog, MonthlyHabit, Goal, Challenge, UserProfile } from '../types';
 
@@ -115,19 +116,26 @@ export async function syncLogsToFirestore(userId: string, logs: Record<string, D
 }
 
 /**
- * Sync habits to Firestore
+ * Sync habits to Firestore - with proper deletion support
  */
 export async function syncHabitsToFirestore(userId: string, habits: MonthlyHabit[]): Promise<void> {
     try {
-        // Skip if no habits to sync
-        if (habits.length === 0) {
-            console.log('⏭️ No habits to sync');
-            return;
-        }
-
         const batch = writeBatch(db);
         const habitsRef = collection(db, 'users', userId, 'habits');
 
+        // Get existing habits in Firestore
+        const existingSnap = await getDocs(habitsRef);
+        const existingIds = new Set(existingSnap.docs.map(d => d.id));
+        const localIds = new Set(habits.map(h => h.id));
+
+        // Delete habits that don't exist in local state
+        existingSnap.docs.forEach((doc) => {
+            if (!localIds.has(doc.id)) {
+                batch.delete(doc.ref);
+            }
+        });
+
+        // Write/update local habits
         habits.forEach((habit) => {
             const docRef = doc(habitsRef, habit.id);
             batch.set(docRef, habit, { merge: true });
@@ -142,19 +150,26 @@ export async function syncHabitsToFirestore(userId: string, habits: MonthlyHabit
 }
 
 /**
- * Sync goals to Firestore
+ * Sync goals to Firestore - with proper deletion support
  */
 export async function syncGoalsToFirestore(userId: string, goals: Goal[]): Promise<void> {
     try {
-        // Skip if no goals to sync
-        if (goals.length === 0) {
-            console.log('⏭️ No goals to sync');
-            return;
-        }
-
         const batch = writeBatch(db);
         const goalsRef = collection(db, 'users', userId, 'goals');
 
+        // Get existing goals in Firestore
+        const existingSnap = await getDocs(goalsRef);
+        const existingIds = new Set(existingSnap.docs.map(d => d.id));
+        const localIds = new Set(goals.map(g => g.id));
+
+        // Delete goals that don't exist in local state
+        existingSnap.docs.forEach((doc) => {
+            if (!localIds.has(doc.id)) {
+                batch.delete(doc.ref);
+            }
+        });
+
+        // Write/update local goals
         goals.forEach((goal) => {
             const docRef = doc(goalsRef, goal.id);
             batch.set(docRef, goal, { merge: true });
@@ -169,19 +184,26 @@ export async function syncGoalsToFirestore(userId: string, goals: Goal[]): Promi
 }
 
 /**
- * Sync challenges to Firestore
+ * Sync challenges to Firestore - with proper deletion support
  */
 export async function syncChallengesToFirestore(userId: string, challenges: Challenge[]): Promise<void> {
     try {
-        // Skip if no challenges to sync
-        if (challenges.length === 0) {
-            console.log('⏭️ No challenges to sync');
-            return;
-        }
-
         const batch = writeBatch(db);
         const challengesRef = collection(db, 'users', userId, 'challenges');
 
+        // Get existing challenges in Firestore
+        const existingSnap = await getDocs(challengesRef);
+        const existingIds = new Set(existingSnap.docs.map(d => d.id));
+        const localIds = new Set(challenges.map(c => c.id));
+
+        // Delete challenges that don't exist in local state
+        existingSnap.docs.forEach((doc) => {
+            if (!localIds.has(doc.id)) {
+                batch.delete(doc.ref);
+            }
+        });
+
+        // Write/update local challenges
         challenges.forEach((challenge) => {
             const docRef = doc(challengesRef, challenge.id);
             batch.set(docRef, challenge, { merge: true });

@@ -12,12 +12,30 @@ interface DeleteModalProps {
 export const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onConfirm, onCancel, title, message }) => {
   if (!isOpen) return null;
 
+  const handleConfirm = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onConfirm();
+  };
+
+  const handleCancel = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onCancel();
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onCancel();
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-slate-950/40 backdrop-blur-md"
-        onClick={onCancel}
+        onClick={handleBackdropClick}
       />
       
       {/* Modal Content */}
@@ -36,13 +54,15 @@ export const DeleteModal: React.FC<DeleteModalProps> = ({ isOpen, onConfirm, onC
           
           <div className="flex flex-col w-full gap-3">
             <button 
-              onClick={onConfirm}
+              onClick={handleConfirm}
+              type="button"
               className="w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold shadow-lg shadow-red-100 dark:shadow-none transition-all active:scale-95"
             >
               Yes, Delete
             </button>
             <button 
-              onClick={onCancel}
+              onClick={handleCancel}
+              type="button"
               className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-2xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all active:scale-95"
             >
               Cancel
