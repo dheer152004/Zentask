@@ -14,7 +14,7 @@ interface TaskManagerProps {
   datesWithTasks: string[];
 }
 
-const CATEGORIES: Category[] = ['Work', 'Personal', 'Health', 'Urgent', 'Other'];
+const CATEGORIES: Category[] = ['Work', 'Personal', 'Health', 'Urgent', 'Family', 'School', 'Academic', 'Other'];
 
 const generateId = (): string => {
   try {

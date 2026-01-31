@@ -1,5 +1,5 @@
 
-export type Category = 'Work' | 'Personal' | 'Health' | 'Urgent' | 'Other';
+export type Category = 'Work' | 'Personal' | 'Health' | 'Urgent' | 'Family' | 'School' | 'Academic' | 'Other';
 
 export interface Subtask {
   id: string;
