@@ -417,6 +417,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 <h3 className="text-4xl font-black text-slate-800 dark:text-slate-100 mb-2 transition-colors">{profile.name}</h3>
                 {profile.username && <p className="text-slate-400 dark:text-slate-500 text-sm mb-2 font-mono">@{profile.username}</p>}
                 {profile.email && <p className="text-slate-400 dark:text-slate-500 text-sm mb-2 font-mono">{profile.email}</p>}
+                {profile.accountCreatedDate && <p className="text-slate-400 dark:text-slate-500 text-sm mb-4 font-mono">Member since {new Date(profile.accountCreatedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>}
                 <p className="text-slate-500 dark:text-slate-400 text-lg mb-6 transition-colors">{profile.bio}</p>
                 <div className="inline-flex items-center gap-3 px-6 py-3 bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 rounded-2xl text-indigo-700 dark:text-indigo-300 transition-colors">
                   <span className="text-sm font-black uppercase tracking-widest italic">"{profile.productivityMantra}"</span>

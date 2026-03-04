@@ -96,8 +96,9 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   };
 
   const handleDeleteGoalAttempt = (goal: Goal) => {
-    if (goal.completed && !allowCompletedDeletion) {
-      setNotification({ message: "Deletion of completed goals is disabled in your profile settings.", type: 'error' });
+    const hasProgress = goal.completed || (goal.subtasks || []).length > 0;
+    if (hasProgress && !allowCompletedDeletion) {
+      setNotification({ message: "Deletion of goals with active progress is disabled in your profile settings.", type: 'error' });
       return;
     }
     setPendingDelete({ id: goal.id, title: 'Delete Goal' });

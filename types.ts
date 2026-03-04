@@ -68,6 +68,7 @@ export interface UserProfile {
   allowCompletedDeletion: boolean;
   username?: string; // Optional username for login
   email?: string; // Optional email address
+  accountCreatedDate?: string; // ISO string for account creation date
 }
 
 export interface MonthlyStats {

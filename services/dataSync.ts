@@ -41,7 +41,8 @@ export async function loadUserDataFromFirestore(userId: string): Promise<Partial
                 theme: data.theme || 'indigo',
                 allowCompletedDeletion: data.allowCompletedDeletion ?? false,
                 username: data.username,
-                email: data.email
+                email: data.email,
+                accountCreatedDate: data.createdAt
             };
         }
 
