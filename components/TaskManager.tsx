@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Task, Category, Subtask } from '../types';
+import { Task, Category } from '../types';
 import { DeleteModal } from './DeleteModal';
 import { Notification } from './Notification';
 
@@ -15,6 +15,35 @@ interface TaskManagerProps {
 }
 
 const CATEGORIES: Category[] = ['Work', 'Personal', 'Health', 'Urgent', 'Family', 'School', 'Academic', 'Other'];
+
+const CategoryDropdown: React.FC<{ value: Category; onChange: (c: Category) => void; small?: boolean }> = ({ value, onChange, small }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, []);
+
+  return (
+    <div ref={ref} className={`relative ${small ? 'w-36' : 'w-48'}`}>
+      <button type="button" onClick={() => setOpen(o => !o)} className={`w-full flex items-center justify-between px-3 py-2 rounded-xl transition-colors ${small ? 'text-xs font-bold' : 'text-sm font-black'} bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-transparent hover:border-slate-100 dark:hover:border-slate-700` }>
+        <span className="truncate">{value}</span>
+        <svg className="w-4 h-4 ml-2 text-slate-400" viewBox="0 0 20 20" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 8l4 4 4-4"/></svg>
+      </button>
+      {open && (
+        <ul className="absolute z-50 mt-2 w-full bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-lg overflow-hidden max-h-60 custom-scrollbar">
+          {CATEGORIES.map(cat => (
+            <li key={cat} role="option" onClick={() => { onChange(cat); setOpen(false); }} className="px-4 py-2 text-sm hover:bg-indigo-50 dark:hover:bg-indigo-900/30 cursor-pointer text-slate-700 dark:text-slate-200">{cat}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 const generateId = (): string => {
   try {
@@ -285,9 +314,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({
             <form onSubmit={handleAddTask} className="flex flex-col gap-2">
               <input ref={inputRef} type="text" value={newTaskText} onChange={(e) => setNewTaskText(e.target.value)} placeholder="Add a task to today's log..." className="w-full px-6 py-4 bg-transparent border-none focus:outline-none text-lg text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-colors font-medium" />
               <div className="flex items-center justify-between px-4 pb-2 pt-2 border-t border-slate-50 dark:border-slate-800">
-                <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value as Category)} className="bg-slate-50 dark:bg-slate-800 border-none px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 focus:outline-none">
-                  {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                </select>
+                <CategoryDropdown value={selectedCategory} onChange={(c) => setSelectedCategory(c)} small />
                 <button type="submit" disabled={!newTaskText.trim()} className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-200 dark:disabled:bg-slate-800 text-white font-black px-6 py-2.5 rounded-xl transition-all shadow-lg active:scale-95 text-xs uppercase tracking-widest">Capture Task</button>
               </div>
             </form>
@@ -326,13 +353,7 @@ export const TaskManager: React.FC<TaskManagerProps> = ({
                         <div className="flex gap-3">
                           <div className="flex-1">
                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1 ml-1">Category</p>
-                             <select 
-                                value={editCategory} 
-                                onChange={(e) => setEditCategory(e.target.value as Category)}
-                                className="w-full bg-slate-50 dark:bg-slate-800 px-3 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-700 dark:text-slate-300"
-                              >
-                                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
-                              </select>
+                             <CategoryDropdown value={editCategory} onChange={(c) => setEditCategory(c)} />
                           </div>
                           <div className="flex-1">
                              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1 ml-1">Due Date</p>

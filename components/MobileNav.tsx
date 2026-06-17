@@ -15,7 +15,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ activeTab, setActiveTab, u
         <div className="md:hidden absolute top-0 right-0 z-40 px-4 pt-4">
           <div 
             onClick={() => setActiveTab('profile')}
-            className={`flex items-center gap-3 px-3 py-2 rounded-full cursor-pointer transition-all ${activeTab === 'profile' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white/80 dark:bg-slate-900/80 text-slate-800 dark:text-slate-100 shadow-md hover:shadow-lg'}`}
+            className={`flex items-center gap-3 px-3 py-2 rounded-full cursor-pointer transition-all bg-white/80 dark:bg-slate-900/80 text-slate-800 dark:text-slate-100 shadow-md hover:shadow-lg`}
           >
             <img 
               src={userProfile.avatarUrl} 

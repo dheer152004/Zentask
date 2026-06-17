@@ -3,7 +3,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { MonthlyHabit, Category, THEMES } from '../types';
 import { DeleteModal } from './DeleteModal';
-import { Notification } from './Notification';
+// import { Notification } from './Notification';
 
 interface MonthlyHabitsProps {
   habits: MonthlyHabit[];
@@ -128,7 +128,7 @@ export const MonthlyHabits: React.FC<MonthlyHabitsProps> = ({
       const completedCount = habits.filter(h => h.completions.includes(dateStr)).length;
       return {
         day,
-        score: habits.length > 0 ? (completedCount / habits.length) * 100 : 0
+        score : habits.length > 0 ? (completedCount / habits.length) * 100 : 0
       };
     });
   }, [habits, daysInMonth, currentYear, currentMonth]);
@@ -137,13 +137,13 @@ export const MonthlyHabits: React.FC<MonthlyHabitsProps> = ({
 
   return (
     <>
-      {notification && (
+      {/* {notification && (
         <Notification 
           message={notification.message} 
           type={notification.type}
           onClose={() => setNotification(null)}
         />
-      )}
+      )} */}
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12 transition-colors">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -186,7 +186,7 @@ export const MonthlyHabits: React.FC<MonthlyHabitsProps> = ({
       <div className="bg-white dark:bg-slate-900 p-2 rounded-3xl shadow-md border border-slate-100 dark:border-slate-800 transition-colors">
         <form onSubmit={handleAddHabit} className="flex flex-col sm:flex-row gap-2">
           <div className="flex-1 relative">
-            <input type="text" value={newHabitText} onChange={(e) => setNewHabitText(e.target.value)} placeholder="Track a new recurring goal..." className="w-full pl-6 pr-32 py-4 bg-transparent border-none focus:outline-none text-lg text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-colors" />
+            <input type="text" value={newHabitText} onChange={(e) => setNewHabitText(e.target.value)} placeholder="Track a new goal..." className="w-full pl-6 pr-32 py-4 bg-transparent border-none focus:outline-none text-lg text-slate-800 dark:text-slate-100 placeholder:text-slate-300 dark:placeholder:text-slate-600 transition-colors" />
             <div className="absolute right-2 top-2 bottom-2 flex items-center">
               <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value as Category)} className="h-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 rounded-xl text-xs font-bold uppercase text-slate-500 dark:text-slate-400 focus:outline-none transition-colors">
                 {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
@@ -203,7 +203,7 @@ export const MonthlyHabits: React.FC<MonthlyHabitsProps> = ({
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 transition-colors">
-                  <th className="sticky left-0 bg-slate-50 dark:bg-slate-800 p-4 text-left text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest w-48 z-20">Task / Habit</th>
+                  <th className="sticky left-0 bg-slate-50 dark:bg-slate-800 p-4 text-left text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest w-48 z-20">Habit</th>
                   {Array.from({ length: daysInMonth }, (_, i) => {
                     const isToday = (i + 1) === now.getDate();
                     return (

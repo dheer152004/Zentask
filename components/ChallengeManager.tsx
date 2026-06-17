@@ -119,7 +119,7 @@ export const ChallengeManager: React.FC<ChallengeManagerProps> = ({
   };
 
   const handleDeleteAttempt = (challenge: Challenge) => {
-    if (challenge.status === 'completed' && !allowCompletedDeletion) {
+    if (!allowCompletedDeletion) {
       setDeletionError(true);
       setTimeout(() => setDeletionError(false), 4000);
       return;
@@ -303,13 +303,13 @@ export const ChallengeManager: React.FC<ChallengeManagerProps> = ({
                 </div>
                 <button 
                   onClick={() => handleDeleteAttempt(challenge)} 
-                  disabled={challenge.status === 'completed' && !allowCompletedDeletion}
+                  disabled={!allowCompletedDeletion}
                   className={`opacity-0 group-hover:opacity-100 p-2 transition-all rounded-xl ${
-                    challenge.status === 'completed' && !allowCompletedDeletion
+                    !allowCompletedDeletion
                       ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
                       : 'text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10'
                   }`}
-                  title={challenge.status === 'completed' && !allowCompletedDeletion ? 'Enable deletion of completed duels in settings' : 'Delete duel'}
+                  title={!allowCompletedDeletion ? 'Enable deletion in profile settings to remove duels' : 'Delete duel'}
                 >
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
@@ -398,7 +398,7 @@ export const ChallengeManager: React.FC<ChallengeManagerProps> = ({
                         ? 'text-green-300/50 dark:text-green-400/50 cursor-not-allowed'
                         : 'text-green-300 hover:text-red-400'
                     }`}
-                    title={!allowCompletedDeletion ? 'Enable deletion of completed duels in settings' : 'Delete duel'}
+                    title={!allowCompletedDeletion ? 'Enable deletion in profile settings to remove duels' : 'Delete duel'}
                   >
                     <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>

@@ -27,6 +27,9 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ logs, goals, c
     Personal: themeColors.primary[400],
     Health: '#10b981', // Keep static green for health
     Urgent: '#ef4444', // Keep static red for urgent
+    Family: themeColors.primary[500],
+    School: themeColors.primary[300],
+    Academic: themeColors.primary[200],
     Other: themeColors.neutral[400]
   };
 
@@ -52,7 +55,14 @@ export const ReportDashboard: React.FC<ReportDashboardProps> = ({ logs, goals, c
     }
 
     const categoryCounts: Record<Category, number> = {
-      Work: 0, Personal: 0, Health: 0, Urgent: 0, Other: 0
+      Work: 0,
+      Personal: 0,
+      Health: 0,
+      Urgent: 0,
+      Family: 0,
+      School: 0,
+      Academic: 0,
+      Other: 0
     };
 
     let totalGlobal = 0;

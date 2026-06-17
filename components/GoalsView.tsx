@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Goal, Subtask } from '../types';
 import { DeleteModal } from './DeleteModal';
-import { Notification } from './Notification';
+// import { Notification } from './Notification';
 
 interface GoalsViewProps {
   goals: Goal[];
@@ -96,17 +96,16 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
   };
 
   const handleDeleteGoalAttempt = (goal: Goal) => {
-    const hasProgress = goal.completed || (goal.subtasks || []).length > 0;
-    if (hasProgress && !allowCompletedDeletion) {
-      setNotification({ message: "Deletion of goals with active progress is disabled in your profile settings.", type: 'error' });
+    if (!allowCompletedDeletion) {
+      setNotification({ message: "Goal deletion is disabled in your profile settings. Enable deletion to remove goals.", type: 'error' });
       return;
     }
     setPendingDelete({ id: goal.id, title: 'Delete Goal' });
   };
 
   const handleDeleteSubtaskAttempt = (goal: Goal, subtask: Subtask) => {
-    if (subtask.completed && !allowCompletedDeletion) {
-      setNotification({ message: "Deletion of completed steps is disabled in your profile settings.", type: 'error' });
+    if (!allowCompletedDeletion) {
+      setNotification({ message: "Step deletion is disabled in your profile settings. Enable deletion to remove steps.", type: 'error' });
       return;
     }
     setPendingDelete({ id: goal.id, subId: subtask.id, title: 'Delete Step' });
@@ -146,13 +145,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
 
   return (
     <>
-      {notification && (
+      {/* {notification && (
         <Notification 
           message={notification.message} 
           type={notification.type}
           onClose={() => setNotification(null)}
         />
-      )}
+      )} */}
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 transition-colors">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -296,13 +295,13 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                       </button>
                       <button 
                         onClick={() => handleDeleteGoalAttempt(goal)} 
-                        disabled={goal.completed && !allowCompletedDeletion}
+                        disabled={!allowCompletedDeletion}
                         className={`p-2 transition-all rounded-xl ${
-                          goal.completed && !allowCompletedDeletion
+                          !allowCompletedDeletion
                             ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
                             : 'text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10'
                         }`}
-                        title={goal.completed && !allowCompletedDeletion ? 'Enable deletion of completed goals in settings' : 'Delete Goal'}
+                        title={!allowCompletedDeletion ? 'Enable deletion in profile settings to remove goals' : 'Delete Goal'}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
@@ -329,7 +328,7 @@ export const GoalsView: React.FC<GoalsViewProps> = ({
                     <div key={subtask.id} className="flex items-center gap-3 group/sub">
                       <button onClick={() => handleToggleSubtask(goal.id, subtask.id)} className={`w-5 h-5 rounded-lg border-2 transition-colors flex items-center justify-center shrink-0 ${subtask.completed ? 'bg-indigo-500 border-indigo-500' : 'border-slate-100 dark:border-slate-800 hover:border-indigo-400'}`}>{subtask.completed && <svg className="w-3.5 h-3.5 text-white animate-check-pop" fill="currentColor" viewBox="0 0 20 20"><path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/></svg>}</button>
                       <span className={`text-sm flex-1 leading-snug font-medium ${subtask.completed ? 'text-slate-300 dark:text-slate-600 line-through' : 'text-slate-600 dark:text-slate-300'}`}>{subtask.text}</span>
-                      <button onClick={() => handleDeleteSubtaskAttempt(goal, subtask)} className="opacity-0 group-hover/sub:opacity-100 p-1 text-slate-300 hover:text-red-400 transition-all"><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg></button>
+                      <button onClick={() => handleDeleteSubtaskAttempt(goal, subtask)} className={`opacity-0 group-hover/sub:opacity-100 p-1 transition-all ${!allowCompletedDeletion ? 'text-slate-300 hover:text-slate-300 cursor-not-allowed' : 'text-slate-300 hover:text-red-400'}`}><svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/></svg></button>
                     </div>
                   ))}
                   
