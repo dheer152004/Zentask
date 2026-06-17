@@ -22,6 +22,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
           <div className="hidden md:flex items-center gap-8 text-sm font-bold text-slate-600 dark:text-slate-300">
             <a href="#features" className="hover:text-indigo-600 transition-colors">Features</a>
             <a href="#about" className="hover:text-indigo-600 transition-colors">Methodology</a>
+              <a href="/terms" className="hover:text-indigo-600 transition-colors">Terms</a>
+              <a href="/faq" className="hover:text-indigo-600 transition-colors">FAQ</a>
             <button 
               onClick={onLaunchApp}
               className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-100 dark:shadow-none transition-all active:scale-95"
@@ -167,6 +169,66 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
         </div>
       </section>
 
+      {/* Terms & Privacy */}
+      <section id="terms" className="py-24 px-4 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-black mb-4 text-slate-900 dark:text-white">Terms & Privacy</h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-4">ZenTask is committed to protecting your privacy and keeping your data safe. Below is a brief summary of our data practices in plain language.</p>
+          <div className="space-y-4 text-slate-700 dark:text-slate-300">
+            <div>
+              <h3 className="font-bold">What we collect</h3>
+              <p className="text-sm">We collect only the data you provide while using the app (account email, basic profile preferences, and task/goal data). This information is used to provide authentication, backups, and personalized features.</p>
+            </div>
+            <div>
+              <h3 className="font-bold">How we use your data</h3>
+              <p className="text-sm">We use your data solely to operate, improve, and secure the ZenTask service — for example: login, syncing across devices, and generating your activity reports. We do not sell your data to third parties or use it for advertising purposes.</p>
+            </div>
+            <div>
+              <h3 className="font-bold">Storage & deletion</h3>
+              <p className="text-sm">By default, your data is stored on our secure servers to enable account features and cross-device sync. You may delete your account and all associated data at any time from your Profile settings — this permanently removes your data from our servers. If you prefer not to store data on our servers, you can choose to keep data locally in your browser (localStorage); this option is available in your Profile settings.</p>
+            </div>
+            <div>
+              <h3 className="font-bold">Security</h3>
+              <p className="text-sm">We use standard industry practices to protect your data in transit and at rest. While we strive to safeguard your information, no system is 100% secure — you should choose a strong password and enable any available protections.</p>
+            </div>
+            <div>
+              <h3 className="font-bold">Contact</h3>
+              <p className="text-sm">If you have questions about our privacy practices or want your data removed, please contact us at <a href="mailto:privacy@zentask.example" className="underline">privacy@zentask.example</a>.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="py-24 px-4 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-black mb-8 text-slate-900 dark:text-white">Frequently Asked Questions</h2>
+          <div className="space-y-6 text-slate-700 dark:text-slate-300">
+            <div>
+              <h4 className="font-bold">Can I delete my data?</h4>
+              <p className="text-sm">Yes — you can delete your account and all server-stored data anytime from the Profile & Settings screen. Deletion is permanent.</p>
+            </div>
+            <div>
+              <h4 className="font-bold">Do you sell my data?</h4>
+              <p className="text-sm">No. We do not sell your personal data or task data. Your information is used only to provide and improve the service.</p>
+            </div>
+            <div>
+              <h4 className="font-bold">Can I keep data only on my device?</h4>
+              <p className="text-sm">Yes. There is an option in Profile settings to store data locally in your browser. Choosing this means data will not be uploaded to our servers and won't sync across devices.</p>
+            </div>
+            <div>
+              <h4 className="font-bold">How secure is my data?</h4>
+              <p className="text-sm">We follow common security practices to protect your data. For sensitive use-cases, we recommend enabling local-only storage and using strong device-level protections.</p>
+            </div>
+            <div>
+              <h4 className="font-bold">Who can I contact with more questions?</h4>
+              <p className="text-sm">Send an email to <a href="mailto:support@zentask.example" className="underline">support@zentask.example</a> for support or privacy inquiries.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+            
       {/* CTA Final */}
       <section className="py-32 bg-slate-900 dark:bg-black text-white relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
@@ -193,6 +255,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
             <span className="font-black text-lg text-slate-900 dark:text-slate-100">ZenTask </span>
           </div>
           <p className="text-slate-400 text-sm font-medium">© 2026 ZenTask Productivity. Built for Focus.</p>
+          <div className="flex items-center gap-4">
+            <a href="#terms" className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Terms</a>
+            <a href="#faq" className="px-3 py-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">FAQ</a>
+            <a href="#support" className="px-3 py-2 bg-transparent border border-slate-200 dark:border-slate-800 text-slate-400 rounded-lg hover:text-indigo-600 transition-colors">Support</a>
+          </div>
           <div className="flex gap-6">
             {/* <a href="#" className="text-slate-400 hover:text-indigo-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/></svg></a> */}
             {/* <a href="#" className="text-slate-400 hover:text-indigo-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg></a> */}

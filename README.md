@@ -52,12 +52,13 @@ Can run without sign-up but data will be stored in your browser, removing your b
    VITE_FIREBASE_APP_ID=
    VITE_FIREBASE_VAPID_KEY=
    ```
+4.  Add the rules in firebase
 
-4. Start the development server:
+5. Start the development server:
    ```bash
    npm run dev
    ```
 
-5. Open your browser and navigate to `http://localhost:3000`.
+6. Open your browser and navigate to `http://localhost:3000`.
 
 This project is licensed under the MIT License.
