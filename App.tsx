@@ -1,19 +1,19 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, Suspense, lazy } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from './services/firebase';
 import { loadUserDataFromFirestore, debouncedSyncToFirestore, syncAllDataToFirestore } from './services/dataSync';
-import { Auth } from './components/Auth';
-import { TaskManager } from './components/TaskManager';
-import { ReportDashboard } from './components/ReportDashboard';
-import { MonthlyHabits } from './components/MonthlyHabits';
-import { Profile } from './components/Profile';
-import { Sidebar } from './components/Sidebar';
-import { MobileNav } from './components/MobileNav';
-import { GoalsView } from './components/GoalsView';
-import { ChallengeManager } from './components/ChallengeManager';
-import { LandingPage } from './components/LandingPage';
+const Auth = lazy(() => import('./components/Auth').then(m => ({ default: m.Auth })));
+const TaskManager = lazy(() => import('./components/TaskManager').then(m => ({ default: m.TaskManager })));
+const ReportDashboard = lazy(() => import('./components/ReportDashboard').then(m => ({ default: m.ReportDashboard })));
+const MonthlyHabits = lazy(() => import('./components/MonthlyHabits').then(m => ({ default: m.MonthlyHabits })));
+const Profile = lazy(() => import('./components/Profile').then(m => ({ default: m.Profile })));
+const Sidebar = lazy(() => import('./components/Sidebar').then(m => ({ default: m.Sidebar })));
+const MobileNav = lazy(() => import('./components/MobileNav').then(m => ({ default: m.MobileNav })));
+const GoalsView = lazy(() => import('./components/GoalsView').then(m => ({ default: m.GoalsView })));
+const ChallengeManager = lazy(() => import('./components/ChallengeManager').then(m => ({ default: m.ChallengeManager })));
+const LandingPage = lazy(() => import('./components/LandingPage').then(m => ({ default: m.LandingPage })));
 import { Task, DayLog, MonthlyHabit, Goal, UserProfile, Challenge, THEMES } from './types';
 
 const App: React.FC = () => {
